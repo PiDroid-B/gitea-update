@@ -62,7 +62,7 @@ go to the 'VARIABLES' part in the script
 
 ## Usage
 
-```bash
+```
 Usage : ${0##*/} <Option>
 
 Option :
