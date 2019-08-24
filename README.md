@@ -47,11 +47,11 @@ go to the 'VARIABLES' part in the script
   
 | key | value | example |
 |-|-|-|
-| MAIL_FROM | sender | 'Your Mail<your-mail@example.net>' |
-| MAIL_TO | destination | '<mail@example.net>' |
-| GITEA_PATH | path where gitea is installed | "/usr/local/bin/" |
-| GITEA_USER | dedicated user for gitea | "gitea" |
-| CHANGE_LOG_MAX_LINES | max lines of changlog returned in notification | 100 |
+| MAIL_FROM | sender | `'Your Mail<your-mail@example.net>'` |
+| MAIL_TO | destination | `'<mail@example.net>'` |
+| GITEA_PATH | path where gitea is installed | `"/usr/local/bin/"` |
+| GITEA_USER | dedicated user for gitea | `"gitea"` |
+| CHANGE_LOG_MAX_LINES | max lines of changlog returned in notification | `100` |
 
 ## Uninstall
 - remove this script (i.e. if installed in suggested path)  
