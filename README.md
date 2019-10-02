@@ -29,7 +29,7 @@ This script will be launched manually or through a cron :
 - Install this script where you want (i.e. : /usr/local/bin/gitea-update.sh )  
 `cp gitea-update.sh /usr/local/bin/`  
   
-- Edit it with the good values in the part VARIABLES (see [Configure variables](#configure-variables))  
+- Edit it with the good values in the part VARIABLES or use a settings file (see [Configure variables](#configure-variables))  
 
 - Change rights  
 `chmod 700 /usr/local/bin/gitea-update.sh`  
@@ -43,8 +43,16 @@ This script will be launched manually or through a cron :
 - When new version available, use the option -u as like as the noficitaion suggest
 
 ## Configure variables  
-go to the 'VARIABLES' part in the script  
-  
+
+They are loaded with the following order (keep last found variables)
+ - variables defined in the script
+ - /etc/gitea-update.conf (if exist)
+ - /usr/local/etc/gitea-update.conf (if exist)
+ - given file from option -s
+
+the option -s generate a new settings file if not exist, you can use it 
+in /etc/gitea-update.conf or /usr/local/etc/gitea-update.conf or where you want
+
 | key | value | example |
 |-|-|-|
 | MAIL_FROM | sender | `'Your Mail<your-mail@example.net>'` |
@@ -52,6 +60,7 @@ go to the 'VARIABLES' part in the script
 | GITEA_PATH | path where gitea is installed | `"/usr/local/bin/"` |
 | GITEA_USER | dedicated user for gitea | `"gitea"` |
 | CHANGE_LOG_MAX_LINES | max lines of changlog returned in notification | `100` |
+
 
 ## Uninstall
 - remove this script (i.e. if installed in suggested path)  
@@ -69,6 +78,7 @@ Option :
 -c : Check (Dry-Run notification)
 -n : Notify when update are available
 -u : do the update
+-s </path/of/your/setting> : load settings from dedicated file (it will be create if not exist)
 ```
 
 ## Author
@@ -86,5 +96,5 @@ This project is licensed under the GPL v3 License. See the [LICENSE](https://git
 | version | release | date | description |
 |-|-|-|-|
 | 1.0.0 |  | 2019-08-24 | Init |
-
+| 1.1.0 |  | 2019-10-03 | #1 dedicated file for settings |
 

@@ -2,7 +2,7 @@
 
 # gitea-update.sh
 # https://github.com/PiDroid-B/gitea-update
-# Version : 1.0.0
+# Version : 1.1.0
 # Copyright 2019 PiDroid-B All rights reserved.
 # Use of this source code is governed by a GPL v3
 
@@ -16,7 +16,8 @@ Usage : ${0##*/} <Option>
 Option :
 -c : Check (Dry-Run notification)
 -n : Notify when update are available
--u : do the update
+-u : Do the update
+-s </path/of/your/setting> : load settings from dedicated file (it will be create if not exist)
 
 .
 EOF
@@ -27,33 +28,46 @@ EOF
 #   Gitea, Bash
 #
 # Install this script where you want (i.e. : /usr/local/bin/gitea-update.sh )
-# Edit it with the good values in the part VARIABLES
-# Change rights : chmod 700 /usr/local/bin/gitea-update.sh
+# Set all variables (in place or in dedicated settings file : please see README.md for more information)
+# Change rights for the script (and for settings file if exist) : chmod 700 /usr/local/bin/gitea-update.sh
 # Add cron for periodic check (i.e. every day at 5am : echo "0 5 * * * root /usr/local/bin/gitea-update.sh -n >/dev/null" > /etc/cron.d/gitea )
-# Check if it works : /usr/local/bin/gitea-update.sh -n
+# Check if it works with a Dry-Run : /usr/local/bin/gitea-update.sh -c
 #
 # When new version available, use the option -u as like as the noficitaion suggest
 #
-###############################################################################
-# VARIABLES
-# Please change with your values
-
-# sender of the notification
-MAIL_FROM='Your Mail<your-mail@example.net>'
-# destination
-MAIL_TO='<mail@example.net>'
-
-# where the file 'gitea' is installed
-GITEA_PATH="/usr/local/bin/"
-# user for gitea
-GITEA_USER="gitea"
-
-# max lines of change log returned by email if new version is available
-CHANGE_LOG_MAX_LINES=100
-
+SETTINGS_CONTENT=$(cat <<-EOF
+	###############################################################################
+	# VARIABLES
+	# They are loaded with the following order (keep last found variables)
+	# - variables defined in the script
+	# - /etc/gitea-update.conf (if exist)
+	# - /usr/local/etc/gitea-update.conf (if exist)
+	# - given file from option -s
+	
+	# the option -s generate a new settings file if not exist, you can use it 
+	# in /etc/gitea-update.conf or /usr/local/etc/gitea-update.conf or where you want
+	
+	# sender of the notification
+	MAIL_FROM='Your Mail<your-mail@example.net>'
+	# destination
+	MAIL_TO='<mail@example.net>'
+	
+	# where the file 'gitea' is installed
+	GITEA_PATH="/usr/local/bin/"
+	# user for gitea
+	GITEA_USER="gitea"
+	
+	# max lines of change log returned by email if new version is available
+	CHANGE_LOG_MAX_LINES=100
+	
+EOF
+)
 # -----------------------------------------------------------------------------
 # /!\ don't modify below /!\
 # -----------------------------------------------------------------------------
+eval "$SETTINGS_CONTENT"
+[[ -f "/etc/gitea-update.conf" ]] && . /etc/gitea-update.conf
+[[ -f "/usr/local/etc/gitea-update.conf" ]] && . /usr/local/etc/gitea-update.conf
 
 URL_RELEASE="https://github.com/go-gitea/gitea/releases/"
 URL_CHANGE_LOG="https://raw.githubusercontent.com/go-gitea/gitea/master/CHANGELOG.md"
@@ -64,7 +78,7 @@ NOTIF=0
 UPDATE=0
 CHECK=0
 
-while getopts ":cnu" option
+while getopts ":cnus:" option
 do
 	case "${option}" in
 		c)
@@ -75,6 +89,17 @@ do
 		;;
 		u)
 			UPDATE=1
+		;;
+		s)
+			FILEARG="$OPTARG"
+			# load file if exist else create it
+			if [[ -f "$FILEARG" ]] ; then
+				. "$FILEARG"
+			else
+				echo "$SETTINGS_CONTENT" > "$FILEARG"
+				echo -e "\n\033[0;32m$SETTINGS_CONTENT\n\033[0mPlease edit it with your own values\n\tvi $FILEARG\n"
+				exit 0
+			fi
 		;;
 		\?)
 			echo "$OPTARG : invalid argument"
@@ -93,6 +118,7 @@ done
 	echo -e "\n\033[0;31mError : \033[0mYou must edit this script with your settings (MAIL_TO)" && \
 	echo -e "${INFO}" && exit 1
 
+[[ "${GITEA_PATH}" != */ ]] && GITEA_PATH="${GITEA_PATH}/"
 [[ ! -f "${GITEA_PATH}gitea" ]] &&  \
         echo -e "\n\033[0;31mError : \033[0mYou must edit this script with your settings (GITEA_PATH)" && \
         echo "GITEA_PATH=${GITEA_PATH}" && \
@@ -120,7 +146,7 @@ else
                 changelog=$(wget -O- "${URL_CHANGE_LOG}" )
                 changelog=$(echo "$changelog" | head -n $CHANGE_LOG_MAX_LINES)
 
-		MSG="${MSG}\n\nRun ${0} -u to update Gitea\n\nChangelog (first ${CHANGE_LOG_MAX_LINES} lines)\n\n$changelog"
+		MSG="${MSG}\n\nRun ${0} -u to update Gitea\n\nChangelog (first ${CHANGE_LOG_MAX_LINES} lines)\n\n$changelog\n\nRun ${0} -u to update Gitea\n"
 		echo -e "${MSG}"
 		echo -e "${MSG}" | mail -aFrom:"${MAIL_FROM}" -s "Gitea : new version available : $last" "${MAIL_TO}"
 
